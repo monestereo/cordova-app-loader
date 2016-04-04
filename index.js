@@ -39,7 +39,6 @@ function AppLoader(options){
   options.serverRoot = options.serverRoot || '';
   if(!!options.serverRoot && options.serverRoot[options.serverRoot.length-1] !== '/') options.serverRoot += '/';
   this.newManifestUrl = options.manifestUrl || options.serverRoot + (options.manifest || 'manifest.json');
-
   // initialize a file cache
   if(options.mode) options.mode = 'mirror';
   this.cache = new CordovaFileCache(options);
@@ -108,11 +107,20 @@ AppLoader.prototype.check = function(newManifest){
       .then(function(values){
         var newManifest = values[0];
         var bundledManifest = values[1];
+
+        if (newManifest.breakingVersion > bundledManifest.breakingVersion) {
+        	reject({
+        		msg: 'version too low',
+        		newVersion: newManifest.breakingVersion,
+        		oldVersion: bundledManifest.breakingVersion
+        	})
+        	return;
+        }
         var newFiles = hash(newManifest.files);
 
         // Prevent end-less update loop, check if new manifest
         // has been downloaded before (but failes)
-        
+
         // Check if the newFiles match the previous files (last_update_files)
         if(newFiles === self._lastUpdateFiles) {
           // YES! So we're doing the same update again!
